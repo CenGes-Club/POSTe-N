@@ -1,0 +1,26 @@
+<config>
+    <dsg>
+        <port>/dev/ttyAMA2</port>
+        <baudrate>4800</baudrate>
+        <parity>PARITY_NONE</parity>
+        <stopbits>STOPBITS_ONE</stopbits>
+        <bytesize>EIGHTBITS</bytesize>
+        <timeout>1</timeout>
+    </dsg>
+    <ddrg>
+        <port>/dev/ttyAMA3</port>
+        <baudrate>9600</baudrate>
+        <parity>PARITY_EVEN</parity>
+        <stopbits>STOPBITS_ONE</stopbits>
+        <bytesize>EIGHTBITS</bytesize>
+        <timeout>1</timeout>
+    </ddrg>
+    <lora>
+        <port>/dev/ttyAMA4</port>
+        <baudrate>9600</baudrate>
+        <parity>PARITY_NONE</parity>
+        <stopbits>STOPBITS_ONE</stopbits>
+        <bytesize>EIGHTBITS</bytesize>
+        <timeout>2</timeout>
+    </lora>
+</config>
