@@ -44,7 +44,7 @@ def _read_config(file_path):
     return config
 
 
-def parse_serial_config(file_path, subfield):  # `subfield` needs to be renamed
+def parse_serial_config(file_path, subfield) -> dict:  # `subfield` needs to be renamed
     config = _read_config(file_path)
     for root in config:
         for section_key in config[root]:
@@ -53,3 +53,16 @@ def parse_serial_config(file_path, subfield):  # `subfield` needs to be renamed
                 section[section_key] = int(section[section_key])
             section[section_key] = verify_unique_xml_value(section_key, section[section_key])
     return config[subfield]
+
+
+def parse_string_config(file_path, subfield) -> str:
+    """ Parse XML config where the target return type is a string instead of a dictionary.
+
+    Args:
+        file_path:
+        subfield:
+
+    Returns:
+        `str` the content of the subfield.
+    """
+    pass
