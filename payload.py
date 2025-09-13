@@ -16,16 +16,9 @@ def get_zeroes_from(data_format: DataFormat) -> tuple[str, str]:
     return str('0' * int(n_leading)), str('0' * int(n_trailing))
 
 
-def zeroth_function(leading_zeroes: str, number: list[str]) -> str:
-    formatted_number = ''
-    i = 0
-    for _ in leading_zeroes:
-        if i < len(number):
-            formatted_number += number[i]
-            i += 1
-        else:
-            formatted_number += '0'
-    return formatted_number
+def zeroth_function(zeroes: str, number: str, prefix: bool) -> str:
+    missing_zeroes = len(zeroes) - len(number) if len(number) <= len(zeroes) else 0
+    return '0' * missing_zeroes + number if prefix is True else number + '0' * missing_zeroes
 
 
 def fill_zeroes(data: float, data_format: DataFormat) -> str:
@@ -33,7 +26,7 @@ def fill_zeroes(data: float, data_format: DataFormat) -> str:
     whole_numbers, decimals = str(data).split(".")
 
     ## Adds the Leading Zeroes to the Whole Number
-    whole_number = zeroth_function(leading_zeroes, list(reversed(whole_numbers)))
-    decimal = zeroth_function(trailing_zeroes, list(decimals))
+    whole_number = zeroth_function2(leading_zeroes, whole_numbers, True)
+    decimal = zeroth_function2(trailing_zeroes, decimals, False)
 
-    return whole_number[::-1] + decimal
+    return whole_number + decimal
