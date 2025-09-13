@@ -26,7 +26,7 @@ def fill_zeroes(data: float, data_format: DataFormat) -> str:
     whole_numbers, decimals = str(data).split(".")
 
     ## Adds the Leading Zeroes to the Whole Number
-    whole_number = zeroth_function2(leading_zeroes, whole_numbers, True)
-    decimal = zeroth_function2(trailing_zeroes, decimals, False)
+    whole_number = zeroth_function(leading_zeroes, whole_numbers, True)
+    decimal = zeroth_function(trailing_zeroes, decimals, False)
 
     return whole_number + decimal
