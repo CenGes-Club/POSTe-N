@@ -73,24 +73,23 @@ def setup():
 
 
 # TODO: Determine if nomadic error handling should be done
-def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:  # TODO: Prettify
-    """
-
+def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:
+    """ Get DRRG Data
     Args:
         initial_time:
-
+            time when the DRRG data was retrieved
     Returns:
-        `tuple` of len 2
+        `tuple` of len 2 where the first element is the sensor data and
+        the second element is whether or not the DRRG data was retrieved
     """
     raw_data = get_data_from_port(DRRG_PORT, DRRG_COMM_0)
-    if len(raw_data) == 37:  # TODO: Ask Boss James Why This is Specifically 37
+    if len(raw_data) == 37:
         if do_crc_check(raw_data) != 0:
             return None, True
 
         rain_data, accu_data = bytearray(0), bytearray(0)
         rain_temp, accu_temp = bytearray(4), bytearray(4)  # TODO: Should this be called accu?
 
-        ##-> TODO: This could be turned into a function, but...
         rain_data += raw_data[27:31]
 
         rain_temp[0:1] = rain_data[2:3]
@@ -104,7 +103,6 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:  # TODO: P
         accu_temp[2:3] = accu_data[0:1]
 
         [accu_data_f] = unpack('!f', accu_temp)
-        ##<-
 
         print("Rain Data:" + str(rain_data_f))
         print("Rain Accu:" + str(accu_data_f))
@@ -120,33 +118,32 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:  # TODO: P
         )
 
         return data, False
-    print("ERROR: No communication with DRRG!")
+    print("ERROR: No communication with DRRG!")  # TODO: Log
     return None, True
 
 
 def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
-    """
-
-
+    """Gets DSG Data
     Args:
         initial_time:
-
+            time when the DSG data was retrieved
     Returns:
-        `tuple` of len 1
+        `tuple` of len 2 where the first element is the sensor data and
+        the second element is whether or not the DSG data was retrieved
     """
     data = get_data_from_port(DSG_PORT, DSG_COMM_0)
     if data is None:
-        print("ERROR: No communication with DSG!")
+        print("ERROR: No communication with DSG!")  # TODO: Log
         return None, True
     if do_crc_check(data) != 0:
-        return None, True
+        return None, True  # TODO: Log
 
     water_level = str(int.from_bytes(data[4:5], "big"))
     print("Water level: %s cm" % water_level)
 
     data = SensorData(
         source=DataSource.digital_rain_gauge,
-        unit='mm',
+        unit='cm',
         date=initial_time,
         data=[
             RawData(format=FLOOD_FORMAT, datum=water_level),
@@ -154,7 +151,7 @@ def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
     )
 
     ###Warning Lights and Alarm
-    notify_buzzer(water_level)
+    # notify_buzzer(water_level)
     ###
 
     return data, False
