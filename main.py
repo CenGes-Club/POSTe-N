@@ -1,16 +1,18 @@
 import serial
-from configs import parse_serial_config, verify_unique_xml_value
+from configs import parse_serial_config, verify_unique_xml_value, parse_string_config
 from time import sleep
 from commands import write_to_serial, AT
 from crccheck.crc import Crc16Modbus
-import csv
+from generics import write_to_csv
 from struct import unpack
 from datetime import datetime
+from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT
+from typing import Optional
 
 
 ## Paths
-DATA_LOG_PATH = '/home/postekit/POSTe/data_log.csv'
-EVENT_LOG_PATH = '/home/postekit/POSTe/event_log.csv'
+DATA_LOG_PATH = parse_string_config('config.xml', 'datalogpath')
+EVENT_LOG_PATH = parse_string_config('config.xml', 'eventlogpath')
 
 
 # Miscelleneous Variables
@@ -20,9 +22,9 @@ COUNT = 0
 
 
 # Initialize Variables
-DSG_PORT = serial.Serial(**parse_serial_config('config.xml', 'dsg', verify_unique_xml_value))
-DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'drrg', verify_unique_xml_value))
-LORA_PORT = serial.Serial(**parse_serial_config('config.xml', 'lora', verify_unique_xml_value))
+DSG_PORT = serial.Serial(**parse_serial_config('config.xml', 'dsg'))
+DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'drrg'))
+LORA_PORT = serial.Serial(**parse_serial_config('config.xml', 'lora'))
 
 
 DSG_PORT.rs485_mode = serial.rs485.RS485Settings(
@@ -70,7 +72,8 @@ def setup():
             print('No Reply from LoRa Node')
 
 
-def get_drrg_data(initial_time):  # TODO: Prettify
+# TODO: Determine if nomadic error handling should be done
+def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:  # TODO: Prettify
     """
 
     Args:
@@ -79,24 +82,23 @@ def get_drrg_data(initial_time):  # TODO: Prettify
     Returns:
         `tuple` of len 2
     """
-    data = get_data_from_port(DRRG_PORT, DRRG_COMM_0)
-    if len(data) == 37:  # TODO: Ask Boss James Why This is Specifically 37
-        if do_crc_check(data) != 0:
-            COUNT += 1  # TODO: This must be changed, pls
+    raw_data = get_data_from_port(DRRG_PORT, DRRG_COMM_0)
+    if len(raw_data) == 37:  # TODO: Ask Boss James Why This is Specifically 37
+        if do_crc_check(raw_data) != 0:
             return list(), True
 
         rain_data, accu_data = bytearray(0), bytearray(0)
         rain_temp, accu_temp = bytearray(4), bytearray(4)  # TODO: Should this be called accu?
 
         ##-> TODO: This could be turned into a function, but...
-        rain_data += data[27:31]
+        rain_data += raw_data[27:31]
 
         rain_temp[0:1] = rain_data[2:3]
         rain_temp[2:3] = rain_data[0:1]
 
         [rain_data_f] = unpack('!f', rain_temp)
 
-        accu_data += data[31:35]
+        accu_data += raw_data[31:35]
 
         accu_temp[0:1] = accu_data[2:3]
         accu_temp[2:3] = accu_data[0:1]
@@ -107,10 +109,18 @@ def get_drrg_data(initial_time):  # TODO: Prettify
         print("Rain Data:" + str(rain_data_f))
         print("Rain Accu:" + str(accu_data_f))
 
-        with open(DATA_LOG_PATH, 'a') as f:
-            writer = csv.writer(f)
-            csv_write = [initial_time, str(rain_data_f), str(accu_data_f), "DRRG"]
-            writer.writerow(csv_write)
+        data = SensorData(
+            source=DataSource.digital_rain_gauge,
+            unit='mm',
+            date=initial_time,
+            data=[
+                RawData(format=RAIN_DATA_FORMAT, datum=rain_data_f),
+                RawData(format=RAIN_ACCU_FORMAT, datum=accu_data_f)
+            ]
+        )
+        csv_write = [initial_time, str(rain_data_f), str(accu_data_f), "DRRG"]
+        write_to_csv(DATA_LOG_PATH, csv_write)
+
         return csv_write[1:3], False
     print("ERROR: No communication with DRRG!")
     return list(), True
@@ -135,10 +145,8 @@ def get_dsg_data(initial_time):
     water_level = int.from_bytes(data[4:5], "big")
     print("Water level: %d cm" % water_level)
 
-    with open(DATA_LOG_PATH, 'a') as f:
-        writer = csv.writer(f)
-        csv_write = [initial_time, str(water_level), " cm", "DSG"]
-        writer.writerow(csv_write)
+    csv_write = [initial_time, str(water_level), " cm", "DSG"]
+    write_to_csv(DATA_LOG_PATH, csv_write)
 
     ###Warning Lights and Alarm
     notify_buzzer(water_level)
