@@ -23,7 +23,7 @@
         <bytesize>EIGHTBITS</bytesize>
         <timeout>2</timeout>
     </lora>
-    <datalogpath>Hello</datalogpath>
-    <eventlogpath>heyjude</eventlogpath>
+    <datalogpath>/home/postekit/POSTe/data_log.csv</datalogpath>
+    <eventlogpath>/home/postekit/POSTe/event_log.csv</eventlogpath>
     <cmsginterval>60</cmsginterval>
 </config>

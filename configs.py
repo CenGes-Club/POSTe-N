@@ -19,6 +19,7 @@ KEY_MAPPING = {
     'EIGHTBITS': serial.EIGHTBITS
 }
 
+
 def verify_unique_xml_value(key, value):
     # if key not in ('parity', 'stopbits', 'bytesize'):
     #     return

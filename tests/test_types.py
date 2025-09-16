@@ -1,6 +1,4 @@
-from payload import (
-    get_zeroes_from, FLOOD_FORMAT, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, fill_zeroes
-)
+from data import FLOOD_FORMAT, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, get_zeroes_from, fill_zeroes
 
 
 def test_data_format():
