@@ -45,24 +45,33 @@ def _read_config(file_path):
 
 
 def parse_serial_config(file_path, subfield) -> dict:  # `subfield` needs to be renamed
-    config = _read_config(file_path)
-    for root in config:
-        for section_key in config[root]:
-            section = config[root]
-            if section[section_key].isdigit() is True: # if it's a digit cast it to int
-                section[section_key] = int(section[section_key])
-            section[section_key] = verify_unique_xml_value(section_key, section[section_key])
-    return config[subfield]
+    tree = ElementTree.parse(file_path)
+    section = tree.find(subfield)
+    if section is None:
+        return {}
+
+    config = {}
+    for item in section:
+        config[item.tag] = verify_unique_xml_value(item.tag, item.text)
+        if item.text.isdigit(): # if it's a digit cast it to int
+            config[item.tag] = int(item.text)
+    return config
 
 
-def parse_string_config(file_path, subfield) -> str:
+def parse_string_config(file_path: str, subfield: str) -> str:
     """ Parse XML config where the target return type is a string instead of a dictionary.
 
     Args:
-        file_path:
-        subfield:
+        file_path:`str` The filepath of the xml file.
+        subfield:`str` The subfield that contains the string config.
 
     Returns:
         `str` the content of the subfield.
     """
-    pass
+    tree = ElementTree.parse(file_path)
+    root = tree.getroot()
+
+    for section in root:
+        if section.tag == subfield:
+            return section.text
+    return ''
