@@ -2,6 +2,12 @@ import csv
 from collections import deque
 
 
+def write_to_csv(filepath: str, data: list):
+    with open(filepath, 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(data)
+
+
 def get_last_n_rows_csv(file_path, n):
     """
     Retrieves the last 'n' rows from a CSV file.
