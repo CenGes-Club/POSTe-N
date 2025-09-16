@@ -4,7 +4,7 @@ Dataclass for DSG and DRRG and the Payload Functions
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Union, NewType
+from typing import NewType
 
 
 DataFormat = NewType('DataFormat', str)
@@ -17,6 +17,7 @@ class DataSource(Enum):  # TODO: Check for naming convention
     digital_rain_gauge = 'DRRG' # data
     digital_staff_gauge = 'DSG' # digital staff gauge
 
+
 @dataclass
 class RawData:
     format: DataFormat
@@ -26,15 +27,32 @@ class RawData:
 @dataclass
 class SensorData:
     source: DataSource
-    unit: str # TODO: Remove?
+    unit: str  # TODO: Remove?
     date: datetime
     data: list[RawData]
+
+    def append_data(self, datum: RawData):
+        self.data.append(datum)
 
     def get_payload_format(self) -> str:
         ...
 
-    def get_csv_format(self) -> str:
+    def get_csv_format(self) -> list:
         ...
+
+
+@dataclass
+class CompiledSensorData:
+    data: list[SensorData] = None
+
+    def append_data(self, datum: SensorData):
+        self.data.append(datum)
+
+    def get_full_payload(self) -> str:
+        payload = ''
+        for sensor_data in self.data:
+            payload += sensor_data.get_payload_format()
+        return payload
 
 
 def get_zeroes_from(data_format: DataFormat) -> tuple[str, str]:

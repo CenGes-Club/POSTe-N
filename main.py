@@ -6,7 +6,7 @@ from crccheck.crc import Crc16Modbus
 from generics import write_to_csv
 from struct import unpack
 from datetime import datetime
-from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT
+from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT, CompiledSensorData
 from typing import Optional
 
 
@@ -85,7 +85,7 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:  # TODO: P
     raw_data = get_data_from_port(DRRG_PORT, DRRG_COMM_0)
     if len(raw_data) == 37:  # TODO: Ask Boss James Why This is Specifically 37
         if do_crc_check(raw_data) != 0:
-            return list(), True
+            return None, True
 
         rain_data, accu_data = bytearray(0), bytearray(0)
         rain_temp, accu_temp = bytearray(4), bytearray(4)  # TODO: Should this be called accu?
@@ -118,15 +118,13 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:  # TODO: P
                 RawData(format=RAIN_ACCU_FORMAT, datum=accu_data_f)
             ]
         )
-        csv_write = [initial_time, str(rain_data_f), str(accu_data_f), "DRRG"]
-        write_to_csv(DATA_LOG_PATH, csv_write)
 
-        return csv_write[1:3], False
+        return data, False
     print("ERROR: No communication with DRRG!")
-    return list(), True
+    return None, True
 
 
-def get_dsg_data(initial_time):
+def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
     """
 
 
@@ -139,43 +137,27 @@ def get_dsg_data(initial_time):
     data = get_data_from_port(DSG_PORT, DSG_COMM_0)
     if data is None:
         print("ERROR: No communication with DSG!")
+        return None, True
     if do_crc_check(data) != 0:
-        return list(), True
+        return None, True
 
-    water_level = int.from_bytes(data[4:5], "big")
-    print("Water level: %d cm" % water_level)
+    water_level = str(int.from_bytes(data[4:5], "big"))
+    print("Water level: %s cm" % water_level)
 
-    csv_write = [initial_time, str(water_level), " cm", "DSG"]
-    write_to_csv(DATA_LOG_PATH, csv_write)
+    data = SensorData(
+        source=DataSource.digital_rain_gauge,
+        unit='mm',
+        date=initial_time,
+        data=[
+            RawData(format=FLOOD_FORMAT, datum=water_level),
+        ]
+    )
 
     ###Warning Lights and Alarm
     notify_buzzer(water_level)
     ###
 
-    return csv_write[1:2], False
-
-
-def send_data_to_lora(start_time, data):
-    """ This should obtain the last n rows of data from the data log path
-    and transform it into the 'specified' data format.
-    :param start_time: `datetime` determines which row to start truncating from
-    """  # TODO: Ask Boss James into how to transform the data
-    data = get_last_n_rows_csv(DATA_LOG_PATH, 40)  # 40 rows should be the worst if race conditions happen
-    ##
-    # TODO: Process :param start_time:
-    ##
-    data_to_send = transform_data(*data)
-    write_to_serial(LORA_PORT, AT.MSG, data_to_send)
-
-
-def transform_data(rain_data, rain_accu, water_level): # TODO: Function Not Complete
-    """This should transform `data` and turn it into LoRa compatible characters.
-    :param rain_data:`float`
-    :param rain_accu:`float`
-    :param water_level:`float`
-    :return:
-    """
-    return
+    return data, False
 
 
 def main():
@@ -183,14 +165,21 @@ def main():
     print('Setup Finished')
     inc = 0
     start_time = datetime.now()  # this should fix race condition
-    data_to_transmit = []
     while DSG_PORT.is_open and DSG_PORT.is_open:
 
+        ### <-- This block is responsible for retrieving, logging, and transmitting data.
         drrg_data, has_error_1  = get_drrg_data(start_time)
         dsg_data, has_error_2 = get_dsg_data(start_time)
+        write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
+        write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
+        payload = CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload()
+        write_to_serial(LORA_PORT, AT.CMSG, payload)
+        ### <--
+
+        # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
 
         sleep(60)
-        inc += 1
+        inc += 1  # what is this for?
         start_time = datetime.now()
 
 
