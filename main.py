@@ -105,7 +105,7 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:
         print("Rain Accu:" + str(accu_data_f))
 
         data = SensorData(
-            source=DataSource.digital_rain_gauge,
+            source=DataSource.DIGITAL_RAIN_GAUGE,
             unit='mm',
             date=initial_time,
             data=[
@@ -139,7 +139,7 @@ def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
     print("Water level: %s cm" % water_level)
 
     data = SensorData(
-        source=DataSource.digital_rain_gauge,
+        source=DataSource.DIGITAL_RAIN_GAUGE,
         unit='cm',
         date=initial_time,
         data=[

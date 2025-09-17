@@ -14,8 +14,8 @@ RAIN_ACCU_FORMAT = DataFormat("4.17")
 
 
 class DataSource(Enum):  # TODO: Check for naming convention
-    digital_rain_gauge = 'DRRG' # data
-    digital_staff_gauge = 'DSG' # digital staff gauge
+    DIGITAL_RAIN_GAUGE = 'DRRG' # data
+    DIGITAL_STAFF_GAUGE = 'DSG' # digital staff gauge
 
 
 @dataclass
