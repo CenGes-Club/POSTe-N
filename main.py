@@ -5,20 +5,17 @@ from commands import write_to_serial, AT
 from crccheck.crc import Crc16Modbus
 from generics import write_to_csv
 from struct import unpack
-from datetime import datetime
+from datetime import datetime, timedelta
 from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT, CompiledSensorData
 from typing import Optional
 
-
-## Paths
-DATA_LOG_PATH = parse_string_config('config.xml', 'datalogpath')
-EVENT_LOG_PATH = parse_string_config('config.xml', 'eventlogpath')
+from logs import rename_log_file, DATA_LOG_PATH
 
 
 # Miscelleneous Variables
 # Datalog = True
 # loop_time = 1
-COUNT = 0
+# COUNT = 0
 
 
 # Initialize Variables
@@ -160,13 +157,15 @@ def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
 def main():
     setup()
     print('Setup Finished')
-    inc = 0
-    start_time = datetime.now()  # this should fix race condition
+    now = datetime.now()  # this should fix race condition
+    next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     while DSG_PORT.is_open and DSG_PORT.is_open:
+        if now > next_midnight:
+            rename_log_file(now)
 
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
-        drrg_data, has_error_1  = get_drrg_data(start_time)
-        dsg_data, has_error_2 = get_dsg_data(start_time)
+        drrg_data, has_error_1  = get_drrg_data(now)
+        dsg_data, has_error_2 = get_dsg_data(now)
         write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
         payload = CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload()
@@ -176,8 +175,7 @@ def main():
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
 
         sleep(60)
-        inc += 1  # what is this for?
-        start_time = datetime.now()
+        now = datetime.now()
 
 
 if __name__ == '__main__':
