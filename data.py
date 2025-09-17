@@ -21,7 +21,7 @@ class DataSource(Enum):  # TODO: Check for naming convention
 @dataclass
 class RawData:
     format: DataFormat
-    datum: str = ''
+    datum: float
 
 
 @dataclass
@@ -35,10 +35,13 @@ class SensorData:
         self.data.append(datum)
 
     def get_payload_format(self) -> str:
-        ...
+        payload = ''
+        for element in self.data:
+            payload += fill_zeroes(element.datum, element.format)
+        return payload
 
     def get_csv_format(self) -> list:
-        ...
+        return [self.date] + self.data + [self.source.value]
 
 
 @dataclass

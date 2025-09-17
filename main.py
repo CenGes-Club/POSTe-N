@@ -92,7 +92,7 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:
         rain_temp[0:1] = rain_data[2:3]
         rain_temp[2:3] = rain_data[0:1]
 
-        [rain_data_f] = unpack('!f', rain_temp)
+        [rain_data_f] = unpack('!f', rain_temp)  # shouldn't this be `float`?
 
         accu_data += raw_data[31:35]
 
@@ -158,6 +158,8 @@ def main():
     setup()
     print('Setup Finished')
     now = datetime.now()  # this should fix race condition
+
+    # TODO: Fix condition where power out occurs before next midnight is checked, rena
     next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     while DSG_PORT.is_open and DSG_PORT.is_open:
         if now > next_midnight:
