@@ -31,12 +31,6 @@ class TestConfigReader(unittest.TestCase):
         # Clean up the temporary file
         os.remove(self.temp_file.name)
 
-    def test_parse_serial_config(self):
-        tree = ElementTree.parse(self.temp_file.name)
-        leaf = tree.find('rpi')
-        for child in leaf:
-            print(child.tag, child.text)
-
     def test_read_config_no_errors(self):
         try:
             config = parse_serial_config(self.temp_file.name, 'rpi')

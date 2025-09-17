@@ -8,7 +8,7 @@ from typing import NewType
 
 
 DataFormat = NewType('DataFormat', str)
-FLOOD_FORMAT = DataFormat("5.0")
+FLOOD_FORMAT = DataFormat("5.0")  # TODO: Reconfirm if this is right. There should be no decimals right?
 RAIN_DATA_FORMAT = DataFormat("4.2")
 RAIN_ACCU_FORMAT = DataFormat("4.17")
 
