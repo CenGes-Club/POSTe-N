@@ -10,7 +10,7 @@ class TestDataFormatter(unittest.TestCase):
 
     def test_accu_format(self):
         n = 0.00012
-        expected = "0000" + "00012" + "000000000000"
+        expected = "0000" + "00012000000000000"
         self.assertEqual(expected, fill_zeroes(n, RAIN_ACCU_FORMAT))
 
     def test_rain_data_format(self):

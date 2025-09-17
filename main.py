@@ -154,23 +154,34 @@ def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
     return data, False
 
 
+def get_next_midnight(now: datetime) -> datetime:
+    """Get next midnight
+    Args:
+        now:
+        datetime when the data was retrieved
+    """
+    return (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+
 def main():
     setup()
     print('Setup Finished')
     now = datetime.now()  # this should fix race condition
 
     # TODO: Fix condition where power out occurs before next midnight is checked, rena
-    next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    next_midnight = get_next_midnight(now)
     while DSG_PORT.is_open and DSG_PORT.is_open:
         if now > next_midnight:
             rename_log_file(now)
+            next_midnight = get_next_midnight(now)
 
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
         drrg_data, has_error_1  = get_drrg_data(now)
         dsg_data, has_error_2 = get_dsg_data(now)
         write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
-        payload = CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload()
+        payload = now.strftime("%H:%M") + CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload()
         write_to_serial(LORA_PORT, AT.CMSG, payload)
         ### <--
 
