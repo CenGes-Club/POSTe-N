@@ -14,6 +14,7 @@ CONFIG_XML = """<?xml version="1.0"?>
         <parity>PARITY_NONE</parity>
         <bytesize>EIGHTBITS</bytesize>
         <stopbits>STOPBITS_ONE</stopbits>
+        <timeout>1</timeout>
     </rpi>
     <datalog>/home/postekit/POSTe/data_log.csv</datalog>
 </config>
@@ -38,6 +39,7 @@ class TestConfigReader(unittest.TestCase):
             self.assertEqual(config["baudrate"], 5432)
             self.assertEqual(config["parity"], serial.PARITY_NONE)
             self.assertEqual(config["stopbits"], serial.STOPBITS_ONE)
+            self.assertEqual(1, config["timeout"])
         except Exception as e:
             self.fail(f"read_config raised an exception unexpectedly: {e}")
 
