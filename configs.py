@@ -2,6 +2,12 @@ from xml.etree import ElementTree
 import serial
 
 
+#DRRG comm0 is read rain and accumulated rain values
+DRRG_COMM_0 = b'\x01\x03\x00\x00\x00\x10\x44\x06'
+#DSG comm0 is read water level
+DSG_COMM_0 = b'\x01\x03\x00\x00\x00\x02\xC4\x0B'
+
+
 KEY_MAPPING = {
     'PARITY_NONE': serial.PARITY_NONE,
     'PARITY_ODD': serial.PARITY_ODD,
@@ -21,10 +27,12 @@ KEY_MAPPING = {
 
 
 def verify_unique_xml_value(key, value):
-    # if key not in ('parity', 'stopbits', 'bytesize'):
-    #     return
-    if value in KEY_MAPPING.keys():  # wait, how does this make sense?
-       value = KEY_MAPPING[value]
+
+    if value in KEY_MAPPING.keys():
+        value = KEY_MAPPING[value]
+    else:
+        if value.isdigit():
+            value = int(value)
     serial.Serial(**{key: value})
     return value
 

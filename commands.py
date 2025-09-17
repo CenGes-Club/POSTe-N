@@ -6,7 +6,7 @@ from enum import Enum
 import time
 
 
-class AT(Enum):  # TODO: Add More Commands or Remove
+class AT(Enum):
     # Status Check
     AT = "AT"
     OK = "AT+OK"

@@ -8,12 +8,12 @@ from typing import NewType
 
 
 DataFormat = NewType('DataFormat', str)
-FLOOD_FORMAT = DataFormat("5.0")  # TODO: Reconfirm if this is right. There should be no decimals right?
+FLOOD_FORMAT = DataFormat("5.0")
 RAIN_DATA_FORMAT = DataFormat("4.2")
 RAIN_ACCU_FORMAT = DataFormat("4.17")
 
 
-class DataSource(Enum):  # TODO: Check for naming convention
+class DataSource(Enum):
     DIGITAL_RAIN_GAUGE = 'DRRG' # data
     DIGITAL_STAFF_GAUGE = 'DSG' # digital staff gauge
 
@@ -71,6 +71,8 @@ def zeroth_function(zeroes: str, number: str, prefix: bool) -> str:
 def fill_zeroes(data: float, data_format: DataFormat) -> str:
     leading_zeroes, trailing_zeroes = get_zeroes_from(data_format)
     whole_numbers, decimals = str(data).split(".")
+    if int(decimals) == 0:
+        decimals = ''
 
     ## Adds the Leading Zeroes to the Whole Number
     whole_number = zeroth_function(leading_zeroes, whole_numbers, True)
