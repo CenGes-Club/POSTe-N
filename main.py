@@ -41,12 +41,6 @@ DRRG_PORT.rs485_mode = serial.rs485.RS485Settings(
 )
 
 
-### Functions for DSG and DRRG ###
-# def get_data_from_port(port, comm) -> str:
-#     port.write(comm)
-#     if port.in_waiting > 0:
-#         return port.readline()  # TODO: This method might not work for DSG, check original script.
-#     return ''
 def get_data_from_port(port, comm, line_mode) -> bytes:
     port.write(comm)
     if line_mode:
@@ -171,6 +165,8 @@ def get_next_midnight(now: datetime) -> datetime:
     Args:
         now:
         datetime when the data was retrieved
+    Returns:
+        `datetime` next midnight on 00h 00m 00s
     """
     return (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -189,7 +185,7 @@ def main():
 
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
         dsg_data, has_error_1 = get_dsg_data(now)
-        drrg_data, has_error_2 = get_drrg_data(now)  # TODO: Handle `None` for data
+        drrg_data, has_error_2 = get_drrg_data(now)
 
         # if drrg_data is not None and dsg_data is not None:
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
