@@ -194,7 +194,7 @@ def main():
         # if drrg_data is not None and dsg_data is not None:
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
-        payload = now.strftime("%H%M") + CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload()
+        payload = CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload(now)
         write_to_serial(LORA_PORT, AT.CMSG, payload)
         print('Payload: ', payload)
         ### <--
@@ -204,7 +204,7 @@ def main():
         if LORA_PORT.in_waiting:
             while LORA_PORT.in_waiting:
                 reply = LORA_PORT.readline()
-                print('Device Reply:', reply)
+                print('Device Reply: ', reply)
         else:
             print('Receive Buffer is Empty.')
 

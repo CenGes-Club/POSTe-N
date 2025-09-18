@@ -27,7 +27,7 @@ def get_command(cmd):
     return cmd.value
 
 
-def write_to_serial(serial, command, arg=''):
+def write_to_serial(serial, command, arg=None):
     """ Writes the command to the serial port
 
     :param serial: `serial.Serial` object
@@ -36,7 +36,7 @@ def write_to_serial(serial, command, arg=''):
     :return:
     """
     cmd = get_command(command)
-    if arg != '':
-        cmd += '+' + arg
+    if arg is not None:
+        cmd += '=' + arg
     cmd += '\n'
     serial.write(cmd.encode('ascii'))

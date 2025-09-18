@@ -45,12 +45,14 @@ class MyTestCase(unittest.TestCase):
         expected_2 = "123420"
         self.data2.append_data(RawData(RAIN_DATA_FORMAT, n))
         self.data2.append_data(RawData(FLOOD_FORMAT, None))
+
         expected_null_format = '#####'
-        payload = self.compiled_data.get_full_payload()
-        expected_payload = '1230' + expected_1 + expected_1 + expected_2 + expected_null_format
+        the_time = datetime(1, 1, 1, hour=12, minute=30)
+        payload = self.compiled_data.get_full_payload(the_time)
+        expected_payload = '"1230' + expected_1 + expected_1 + expected_2 + expected_null_format + '"'
         print("\n\nExpected Payload: ", expected_payload)
-        the_time = datetime(1, 1, 1, hour=12, minute=30).strftime("%H%M")
-        self.assertEqual(expected_payload, the_time + payload)
+
+        self.assertEqual(expected_payload, payload)
 
 
 if __name__ == '__main__':
