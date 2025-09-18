@@ -1,16 +1,16 @@
-import serial
-from configs import parse_serial_config, DRRG_COMM_0, DSG_COMM_0
-from time import sleep
-from commands import write_to_serial, AT
-from crccheck.crc import Crc16Modbus
-from generics import write_to_csv
-from struct import unpack
-from datetime import datetime, timedelta
-from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT, CompiledSensorData
-from typing import Optional
 import RPi.GPIO as GPIO
-from logs import rename_log_file, DATA_LOG_PATH
+import serial
 
+from crccheck.crc import Crc16Modbus
+from datetime import datetime, timedelta
+from struct import unpack
+from time import sleep
+
+from commands import write_to_serial, AT
+from configs import parse_serial_config, DRRG_COMM_0, DSG_COMM_0
+from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT, CompiledSensorData
+from generics import write_to_csv
+from logs import rename_log_file, DATA_LOG_PATH
 
 # GPIO Variables\Methods
 GPIO.setwarnings(False)
@@ -19,7 +19,7 @@ GPIO.setmode(GPIO.BOARD)
 
 # Initialize Variables
 DSG_PORT = serial.Serial(**parse_serial_config('config.xml', 'dsg'))
-DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'drrg'))
+DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'ddrg'))
 LORA_PORT = serial.Serial(**parse_serial_config('config.xml', 'lora'))
 
 
@@ -93,13 +93,13 @@ def get_drrg_data(initial_time) -> tuple[SensorData, bool]:
     )
 
     raw_data = get_data_from_port(DRRG_PORT, DRRG_COMM_0, line_mode=True)
-    if len(raw_data) == 37:
-        print("ERROR: No communication with DRRG!")
-        data.append_data(RawData(format=RAIN_DATA_FORMAT, datum=None))
-        data.append_data(RawData(format=RAIN_ACCU_FORMAT, datum=None))
-        return data, True
-    if do_crc_check(raw_data) != 0:
-        print("CRC Check Failed!")
+    error_msg = None
+    if len(raw_data) == 37:  # TODO: Make this eLeGanT
+        error_msg = "CRC Check Failed!"
+    elif do_crc_check(raw_data) != 0:
+        error_msg = "CRC Check Failed!"
+    if error_msg:
+        print(error_msg)
         data.append_data(RawData(format=RAIN_DATA_FORMAT, datum=None))
         data.append_data(RawData(format=RAIN_ACCU_FORMAT, datum=None))
         return data, True
@@ -148,7 +148,7 @@ def get_dsg_data(initial_time) -> tuple[SensorData, bool]:
     raw_data = get_data_from_port(DSG_PORT, DSG_COMM_0, line_mode=False)
 
     error_msg = None
-    if len(raw_data) == 0:
+    if len(raw_data) == 0:  # TODO: Make this eLeGanT
         error_msg = "ERROR: No communication with DSG!"
     elif do_crc_check(raw_data) != 0:
         error_msg = "CRC Check Failed!"
@@ -178,21 +178,22 @@ def main():
     print('Setup Finished')
     now = datetime.now()  # this should fix race condition
 
-    # TODO: Fix condition where power out occurs before next midnight is checked, rena
+    # TODO: Fix condition where power out occurs before next midnight is checked.
     next_midnight = get_next_midnight(now)
-    while DSG_PORT.is_open and DSG_PORT.is_open:
+    while DSG_PORT.is_open and DRRG_PORT.is_open:
         if now > next_midnight:
             rename_log_file(now)
             next_midnight = get_next_midnight(now)
 
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
-        drrg_data, has_error_1  = get_drrg_data(now)  # TODO: Handle `None` for data
+        drrg_data, has_error_1 = get_drrg_data(now)  # TODO: Handle `None` for data
         dsg_data, has_error_2 = get_dsg_data(now)
         # if drrg_data is not None and dsg_data is not None:
         write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
         payload = now.strftime("%H%M") + CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload()
         write_to_serial(LORA_PORT, AT.CMSG, payload)
+        print('Payload: ', payload)
         ### <--
 
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
@@ -211,6 +212,7 @@ def main():
     DSG_PORT.close()
     DRRG_PORT.close()
     LORA_PORT.close()
+    print('Ports Closed.')
 
 
 if __name__ == '__main__':

@@ -33,7 +33,7 @@ def verify_unique_xml_value(key, value):
     else:
         if value.isdigit():
             value = int(value)
-    serial.Serial(**{key: value})
+    # serial.Serial(**{key: value})
     return value
 
 
