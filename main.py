@@ -45,7 +45,7 @@ DRRG_PORT.rs485_mode = serial.rs485.RS485Settings(
 #     if port.in_waiting > 0:
 #         return port.readline()  # TODO: This method might not work for DSG, check original script.
 #     return ''
-def get_data_from_port(port, comm, line_mode):
+def get_data_from_port(port, comm, line_mode) -> bytes:
     port.write(comm)
     if line_mode:
         return port.readline()
@@ -53,7 +53,7 @@ def get_data_from_port(port, comm, line_mode):
         return port.read(port.in_waiting)
 
 
-def do_crc_check(data):
+def do_crc_check(data) -> int:
     crc = Crc16Modbus()
     crc.process(data)
     return crc.final()
@@ -76,14 +76,14 @@ def setup():
 
 
 # TODO: Determine if nomadic error handling should be done
-def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:
+def get_drrg_data(initial_time) -> tuple[SensorData, bool]:
     """ Get DRRG Data
     Args:
         initial_time:
             time when the DRRG data was retrieved
     Returns:
         `tuple` of len 2 where the first element is the sensor data and
-        the second element is whether or not the DRRG data was retrieved
+        the second element is whether the DRRG data was retrieved
     """
     data = SensorData(
         source=DataSource.DIGITAL_RAIN_GAUGE,
@@ -95,10 +95,14 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:
     raw_data = get_data_from_port(DRRG_PORT, DRRG_COMM_0, line_mode=True)
     if len(raw_data) == 37:
         print("ERROR: No communication with DRRG!")
-        return None, True
+        data.append_data(RawData(format=RAIN_DATA_FORMAT, datum=None))
+        data.append_data(RawData(format=RAIN_ACCU_FORMAT, datum=None))
+        return data, True
     if do_crc_check(raw_data) != 0:
         print("CRC Check Failed!")
-        return None, True
+        data.append_data(RawData(format=RAIN_DATA_FORMAT, datum=None))
+        data.append_data(RawData(format=RAIN_ACCU_FORMAT, datum=None))
+        return data, True
 
     rain_data, accu_data = bytearray(0), bytearray(0)
     rain_temp, accu_temp = bytearray(4), bytearray(4)
@@ -125,14 +129,14 @@ def get_drrg_data(initial_time) -> tuple[Optional[SensorData], bool]:
     return data, False
 
 
-def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
+def get_dsg_data(initial_time) -> tuple[SensorData, bool]:
     """Gets DSG Data
     Args:
         initial_time:
             time when the DSG data was retrieved
     Returns:
         `tuple` of len 2 where the first element is the sensor data and
-        the second element is whether or not the DSG data was retrieved
+        the second element is whether the DSG data was retrieved
     """
     data = SensorData(
         source=DataSource.DIGITAL_RAIN_GAUGE,
@@ -142,14 +146,18 @@ def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
     )
 
     raw_data = get_data_from_port(DSG_PORT, DSG_COMM_0, line_mode=False)
-    if len(raw_data) == 0:
-        print("ERROR: No communication with DSG!")
-        return None, True
-    if do_crc_check(raw_data) != 0:
-        print("CRC Check Failed!")
-        return None, True
 
-    water_level = float(int.from_bytes(raw_data[4:5], "big"))  # this is a horrible conversion, but it works
+    error_msg = None
+    if len(raw_data) == 0:
+        error_msg = "ERROR: No communication with DSG!"
+    elif do_crc_check(raw_data) != 0:
+        error_msg = "CRC Check Failed!"
+    if error_msg:
+        print(error_msg)
+        data.data = [RawData(format=FLOOD_FORMAT, datum=None)]
+        return data, True
+
+    water_level = float(int.from_bytes(raw_data[4:5], "big"))  # this is a weird conversion, but it works
     print("Water level: %s cm" % water_level)
 
     data.append_data(RawData(format=FLOOD_FORMAT, datum=water_level))
@@ -157,7 +165,7 @@ def get_dsg_data(initial_time) -> tuple[Optional[SensorData], bool]:
 
 
 def get_next_midnight(now: datetime) -> datetime:
-    """Get next midnight
+    """get next midnight
     Args:
         now:
         datetime when the data was retrieved
@@ -188,6 +196,14 @@ def main():
         ### <--
 
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
+
+        while LORA_PORT.in_waiting!=0:
+        # while ser_port.in_waiting:
+            if LORA_PORT.in_waiting:
+                reply = LORA_PORT.readline()
+                print('Device Reply:', reply)
+            else:
+                print('Receive Buffer is Empty.')
 
         sleep(60)
         now = datetime.now()

@@ -4,7 +4,9 @@ Dataclass for DSG and DRRG and the Payload Functions
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import NewType
+from typing import NewType, Optional
+
+NULL_FORMAT = '#'
 
 
 DataFormat = NewType('DataFormat', str)
@@ -14,14 +16,14 @@ RAIN_ACCU_FORMAT = DataFormat("4.17")
 
 
 class DataSource(Enum):
-    DIGITAL_RAIN_GAUGE = 'DRRG' # data
-    DIGITAL_STAFF_GAUGE = 'DSG' # digital staff gauge
+    DIGITAL_RAIN_GAUGE = 'DRRG'  # data
+    DIGITAL_STAFF_GAUGE = 'DSG'  # digital staff gauge
 
 
 @dataclass
 class RawData:
     format: DataFormat
-    datum: float
+    datum: Optional[float]
 
 
 @dataclass
@@ -36,8 +38,12 @@ class SensorData:
 
     def get_payload_format(self) -> str:
         payload = ''
-        for element in self.data:
+        for element in self.data:  # `RawData`
+            if element.datum is None:
+                payload += get_null_format(NULL_FORMAT, element.format)
+                continue
             payload += fill_zeroes(element.datum, element.format)
+
         return payload
 
     def get_csv_format(self) -> list:
@@ -58,24 +64,56 @@ class CompiledSensorData:
         return payload
 
 
-def get_zeroes_from(data_format: DataFormat) -> tuple[str, str]:
-    n_leading, n_trailing = data_format.split(".")
-    return str('0' * int(n_leading)), str('0' * int(n_trailing))
-
-
-def zeroth_function(zeroes: str, number: str, prefix: bool) -> str:
-    missing_zeroes = len(zeroes) - len(number) if len(number) <= len(zeroes) else 0
+def zeroth_function(zeroes: int, number: str, prefix: bool) -> str:
+    missing_zeroes = zeroes - len(number) if len(number) <= zeroes else 0
     return '0' * missing_zeroes + number if prefix is True else number + '0' * missing_zeroes
 
 
-def fill_zeroes(data: float, data_format: DataFormat) -> str:
-    leading_zeroes, trailing_zeroes = get_zeroes_from(data_format)
-    whole_numbers, decimals = str(data).split(".")
+def fill_zeroes(number: float, data_format: DataFormat) -> str:
+    """Generates a string where missing leading and trailing numbers are filled with zeroes.
+
+    Args:
+        number:
+            The floating point number where the whole and decimal parts will be filled.
+        data_format:
+            data_format:
+                `DataFormat`: The data format in the form "x.y" where:
+                    - x is the number of whole number digits
+                    - y is the number of decimal digits
+    Returns:
+        >>> fill_zeroes(1.3, DataFormat("3.2"))
+        '001.30'
+    """
+    n_leading, n_trailing = map(int, data_format.split("."))
+    whole_numbers, decimals = str(round(number, n_trailing)).split(".")
     if int(decimals) == 0:
         decimals = ''
 
-    ## Adds the Leading Zeroes to the Whole Number
-    whole_number = zeroth_function(leading_zeroes, whole_numbers, True)
-    decimal = zeroth_function(trailing_zeroes, decimals, False)
+    # Adds the Leading Zeroes to the Whole Number
+    whole_number = zeroth_function(n_leading, whole_numbers, True)
+    decimal = zeroth_function(n_trailing, decimals, False)
 
     return whole_number + decimal
+
+def get_null_format(null_format: str, data_format: DataFormat) -> str:
+    """
+    Generate the payload's null format string in the case where data is absent.
+
+    Args:
+        null_format:
+            The character string to used as the placeholder for null data.
+
+        data_format:
+            The data format in the form "x.y" where:
+                - x is the number of whole number digits
+                - y is the number of decimal digits
+
+    Returns:
+        str:
+            A str representing the null formatted payload.
+    Example:
+        >>> get_null_format('#', DataFormat("3.2"))
+        '#####'
+    """
+    n_leading, n_trailing = map(int, data_format.split("."))
+    return null_format * n_leading + null_format * n_trailing
