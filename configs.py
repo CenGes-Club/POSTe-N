@@ -33,7 +33,7 @@ def verify_unique_xml_value(key, value):
     else:
         if value.isdigit():
             value = int(value)
-    # serial.Serial(**{key: value})
+    serial.Serial(**{key: value})
     return value
 
 
@@ -57,7 +57,7 @@ def parse_serial_config(file_path, subfield) -> dict:  # `subfield` needs to be 
     tree = ElementTree.parse(file_path)
     section = tree.find(subfield)
     if section is None:
-        return {}
+        return {}  # TODO: Raise Error Here
 
     config = {}
     for item in section:

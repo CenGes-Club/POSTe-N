@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import serial
+import serial.rs485
 
 from crccheck.crc import Crc16Modbus
 from datetime import datetime, timedelta
@@ -12,6 +13,7 @@ from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FO
 from generics import write_to_csv
 from logs import rename_log_file, DATA_LOG_PATH
 
+
 # GPIO Variables\Methods
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
@@ -19,7 +21,7 @@ GPIO.setmode(GPIO.BOARD)
 
 # Initialize Variables
 DSG_PORT = serial.Serial(**parse_serial_config('config.xml', 'dsg'))
-DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'ddrg'))
+DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'drrg'))
 LORA_PORT = serial.Serial(**parse_serial_config('config.xml', 'lora'))
 
 
@@ -67,12 +69,12 @@ def setup():
     write_to_serial(LORA_PORT, AT.JOIN)
     sleep(5)  # 10 seconds to be safe
 
-    while LORA_PORT.in_waiting != 0:
-        if LORA_PORT.in_waiting:
-            reply = LORA_PORT.readlines()
-            print('LoRa Node: ',reply)
-        else:
-            print('No Reply from LoRa Node')
+    if LORA_PORT.in_waiting:
+        while LORA_PORT.in_waiting:
+            reply = LORA_PORT.readline()
+            print('LoRa Node:', reply)
+    else:
+        print('No Reply from LoRa Node')
 
 
 # TODO: Determine if nomadic error handling should be done
@@ -94,10 +96,10 @@ def get_drrg_data(initial_time) -> tuple[SensorData, bool]:
 
     raw_data = get_data_from_port(DRRG_PORT, DRRG_COMM_0, line_mode=True)
     error_msg = None
-    if len(raw_data) == 37:  # TODO: Make this eLeGanT
-        error_msg = "CRC Check Failed!"
+    if len(raw_data) != 37:  # TODO: Make this eLeGanT
+        error_msg = "ERROR: No communication with DRRG!"
     elif do_crc_check(raw_data) != 0:
-        error_msg = "CRC Check Failed!"
+        error_msg = "CRC Check Failed! DRRG"
     if error_msg:
         print(error_msg)
         data.append_data(RawData(format=RAIN_DATA_FORMAT, datum=None))
@@ -151,7 +153,7 @@ def get_dsg_data(initial_time) -> tuple[SensorData, bool]:
     if len(raw_data) == 0:  # TODO: Make this eLeGanT
         error_msg = "ERROR: No communication with DSG!"
     elif do_crc_check(raw_data) != 0:
-        error_msg = "CRC Check Failed!"
+        error_msg = "CRC Check Failed! DSG"
     if error_msg:
         print(error_msg)
         data.data = [RawData(format=FLOOD_FORMAT, datum=None)]
@@ -186,25 +188,27 @@ def main():
             next_midnight = get_next_midnight(now)
 
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
-        drrg_data, has_error_1 = get_drrg_data(now)  # TODO: Handle `None` for data
-        dsg_data, has_error_2 = get_dsg_data(now)
+        dsg_data, has_error_1 = get_dsg_data(now)
+        drrg_data, has_error_2 = get_drrg_data(now)  # TODO: Handle `None` for data
+
         # if drrg_data is not None and dsg_data is not None:
-        write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
+        write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         payload = now.strftime("%H%M") + CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload()
         write_to_serial(LORA_PORT, AT.CMSG, payload)
         print('Payload: ', payload)
         ### <--
 
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
-
-        while LORA_PORT.in_waiting!=0:
-        # while ser_port.in_waiting:
-            if LORA_PORT.in_waiting:
+        sleep(0.5)
+        if LORA_PORT.in_waiting:
+            while LORA_PORT.in_waiting:
                 reply = LORA_PORT.readline()
                 print('Device Reply:', reply)
-            else:
-                print('Receive Buffer is Empty.')
+        else:
+            print('Receive Buffer is Empty.')
+
+        print('\n')
 
         sleep(60)
         now = datetime.now()

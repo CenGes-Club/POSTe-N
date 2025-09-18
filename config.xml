@@ -7,14 +7,14 @@
         <bytesize>EIGHTBITS</bytesize>
         <timeout>1</timeout>
     </dsg>
-    <ddrg>
+    <drrg>
         <port>/dev/ttyAMA3</port>
         <baudrate>9600</baudrate>
         <parity>PARITY_EVEN</parity>
         <stopbits>STOPBITS_ONE</stopbits>
         <bytesize>EIGHTBITS</bytesize>
         <timeout>1</timeout>
-    </ddrg>
+    </drrg>
     <lora>
         <port>/dev/ttyAMA4</port>
         <baudrate>9600</baudrate>
