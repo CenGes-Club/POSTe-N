@@ -9,10 +9,10 @@ from typing import NewType, Optional
 NULL_FORMAT = '#'
 
 
-DataFormat = NewType('DataFormat', str)
-FLOOD_FORMAT = DataFormat("5.0")
-RAIN_DATA_FORMAT = DataFormat("4.2")
-RAIN_ACCU_FORMAT = DataFormat("4.17")
+_DataFormat = NewType('_DataFormat', str)
+FLOOD_FORMAT = _DataFormat("5.0")
+RAIN_DATA_FORMAT = _DataFormat("4.2")
+RAIN_ACCU_FORMAT = _DataFormat("4.17")
 
 
 class DataSource(Enum):
@@ -22,7 +22,7 @@ class DataSource(Enum):
 
 @dataclass
 class RawData:
-    format: DataFormat
+    format: _DataFormat
     datum: Optional[float]
 
 
@@ -43,11 +43,7 @@ class SensorData:
                 payload += get_null_format(NULL_FORMAT, element.format)
                 continue
             payload += fill_zeroes(element.datum, element.format)
-
         return payload
-
-    def get_csv_format(self) -> list:
-        return [self.date] + [_.datum for _ in self.data] + [self.source.value]
 
 
 @dataclass
@@ -66,7 +62,7 @@ class CompiledSensorData:
     def get_csv_format(self, now) -> list:
         data = [now]
         for sensor_data in self.data:
-            data += [sensor_data.data]
+            data += [sensor_data.get_payload_format()]
         return data
 
 
@@ -75,7 +71,7 @@ def zeroth_function(zeroes: int, number: str, prefix: bool) -> str:
     return '0' * missing_zeroes + number if prefix is True else number + '0' * missing_zeroes
 
 
-def fill_zeroes(number: float, data_format: DataFormat) -> str:
+def fill_zeroes(number: float, data_format: _DataFormat) -> str:
     """Generates a string where missing leading and trailing numbers are filled with zeroes.
 
     Args:
@@ -87,7 +83,7 @@ def fill_zeroes(number: float, data_format: DataFormat) -> str:
                     - x is the number of whole number digits
                     - y is the number of decimal digits
     Returns:
-        >>> fill_zeroes(1.3, DataFormat("3.2"))
+        >>> fill_zeroes(1.3, _DataFormat("3.2"))
         '001.30'
     """
     n_leading, n_trailing = map(int, data_format.split("."))
@@ -101,7 +97,7 @@ def fill_zeroes(number: float, data_format: DataFormat) -> str:
 
     return whole_number + decimal
 
-def get_null_format(null_format: str, data_format: DataFormat) -> str:
+def get_null_format(null_format: str, data_format: _DataFormat) -> str:
     """
     Generate the payload's null format string in the case where data is absent.
 
@@ -118,7 +114,7 @@ def get_null_format(null_format: str, data_format: DataFormat) -> str:
         str:
             A str representing the null formatted payload.
     Example:
-        >>> get_null_format('#', DataFormat("3.2"))
+        >>> get_null_format('#', _DataFormat("3.2"))
         '#####'
     """
     n_leading, n_trailing = map(int, data_format.split("."))

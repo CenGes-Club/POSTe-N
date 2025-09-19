@@ -186,8 +186,6 @@ def main():
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
         dsg_data, has_error_1 = get_dsg_data(now)
         drrg_data, has_error_2 = get_drrg_data(now)
-        # write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
-        # write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         payload = CompiledSensorData(data=[dsg_data, drrg_data])
         write_to_csv(DATA_LOG_PATH, payload.get_csv_format(now))
         write_to_serial(LORA_PORT, AT.CMSG, payload.get_full_payload(now))
