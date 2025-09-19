@@ -53,7 +53,7 @@ def write_to_serial(port, command, arg=None):
     """
     cmd = get_command(command)
     if arg is not None:
-        cmd += '=' + '"' + arg + '"'
+        cmd += '="' + arg + '"'
     cmd += '\n'
     port.write(cmd.encode('ascii'))
 

@@ -188,7 +188,7 @@ def main():
         drrg_data, has_error_2 = get_drrg_data(now)
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
-        payload = CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload(now)
+        payload = CompiledSensorData(data=[dsg_data, drrg_data]).get_full_payload(now)
         write_to_serial(LORA_PORT, AT.CMSG, payload)
         print('Payload: ', payload)
         ### <--
@@ -203,7 +203,7 @@ def main():
         #         print('Device Reply: ', reply)
         # else:
         #     print('Receive Buffer is Empty.')
-        SerialDispatcher(LORA_PORT, handlers=[CMessageOkHandler]).run()
+        SerialDispatcher(LORA_PORT, handlers=[CMessageOkHandler()]).run()
         ### <--
 
         print('\n')

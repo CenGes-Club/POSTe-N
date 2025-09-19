@@ -47,7 +47,7 @@ class SensorData:
         return payload
 
     def get_csv_format(self) -> list:
-        return [self.date] + self.data + [self.source.value]
+        return [self.date] + [_.datum for _ in self.data] + [self.source.value]
 
 
 @dataclass
