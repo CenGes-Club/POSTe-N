@@ -61,7 +61,7 @@ class CompiledSensorData:
         payload = ''
         for sensor_data in self.data:
             payload += sensor_data.get_payload_format()
-        return '"' + now.strftime("%H%M") + payload + '"'
+        return now.strftime("%H%M") + payload
 
 
 def zeroth_function(zeroes: int, number: str, prefix: bool) -> str:

@@ -19,6 +19,9 @@ class TestRenameLogFile(unittest.TestCase):
         # Expected new file names
         expected_data_dst = DATA_LOG_PATH[:-4] + "_" + previous_day + DATA_LOG_PATH[-4:]
         expected_event_dst = EVENT_LOG_PATH[:-4] + "_" + previous_day + EVENT_LOG_PATH[-4:]
+        print('\n')
+        print(expected_data_dst)
+        print(expected_event_dst)
 
         # Check calls to os.rename
         mock_rename.assert_any_call(DATA_LOG_PATH, expected_data_dst)

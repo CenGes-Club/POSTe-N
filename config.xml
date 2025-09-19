@@ -25,5 +25,4 @@
     </lora>
     <datalogpath>/home/postekit/POSTe/data_log.csv</datalogpath>
     <eventlogpath>/home/postekit/POSTe/event_log.csv</eventlogpath>
-    <cmsginterval>60</cmsginterval>
 </config>

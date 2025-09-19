@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from struct import unpack
 from time import sleep
 
-from commands import write_to_serial, AT
+from commands import write_to_serial, AT, SerialDispatcher, CMessageOkHandler
 from configs import parse_serial_config, DRRG_COMM_0, DSG_COMM_0
 from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT, CompiledSensorData
 from generics import write_to_csv
@@ -186,8 +186,6 @@ def main():
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
         dsg_data, has_error_1 = get_dsg_data(now)
         drrg_data, has_error_2 = get_drrg_data(now)
-
-        # if drrg_data is not None and dsg_data is not None:
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         payload = CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload(now)
@@ -196,13 +194,17 @@ def main():
         ### <--
 
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
+
+        ### <-- This block is responsible for handling LoRa response.
         sleep(0.5)
-        if LORA_PORT.in_waiting:
-            while LORA_PORT.in_waiting:
-                reply = LORA_PORT.readline()
-                print('Device Reply: ', reply)
-        else:
-            print('Receive Buffer is Empty.')
+        # if LORA_PORT.in_waiting:
+        #     while LORA_PORT.in_waiting:
+        #         reply = LORA_PORT.readline()
+        #         print('Device Reply: ', reply)
+        # else:
+        #     print('Receive Buffer is Empty.')
+        SerialDispatcher(LORA_PORT, handlers=[CMessageOkHandler]).run()
+        ### <--
 
         print('\n')
 
