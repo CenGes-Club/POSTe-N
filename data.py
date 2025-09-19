@@ -63,6 +63,12 @@ class CompiledSensorData:
             payload += sensor_data.get_payload_format()
         return now.strftime("%H%M") + payload
 
+    def get_csv_format(self, now) -> list:
+        data = [now]
+        for sensor_data in self.data:
+            data += [sensor_data.data]
+        return data
+
 
 def zeroth_function(zeroes: int, number: str, prefix: bool) -> str:
     missing_zeroes = zeroes - len(number) if len(number) <= zeroes else 0

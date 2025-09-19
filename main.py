@@ -153,7 +153,7 @@ def get_dsg_data(initial_time) -> tuple[SensorData, bool]:
         data.data = [RawData(format=FLOOD_FORMAT, datum=None)]
         return data, True
 
-    water_level = float(int.from_bytes(raw_data[4:5], "big"))  # this is a weird conversion, but it works
+    water_level = float(int.from_bytes(raw_data[4:5], "big"))
     print("Water level: %s cm" % water_level)
 
     data.append_data(RawData(format=FLOOD_FORMAT, datum=water_level))
@@ -186,10 +186,11 @@ def main():
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
         dsg_data, has_error_1 = get_dsg_data(now)
         drrg_data, has_error_2 = get_drrg_data(now)
-        write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
-        write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
-        payload = CompiledSensorData(data=[dsg_data, drrg_data]).get_full_payload(now)
-        write_to_serial(LORA_PORT, AT.CMSG, payload)
+        # write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
+        # write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
+        payload = CompiledSensorData(data=[dsg_data, drrg_data])
+        write_to_csv(DATA_LOG_PATH, payload.get_csv_format(now))
+        write_to_serial(LORA_PORT, AT.CMSG, payload.get_full_payload(now))
         print('Payload: ', payload)
         ### <--
 
@@ -203,7 +204,7 @@ def main():
         #         print('Device Reply: ', reply)
         # else:
         #     print('Receive Buffer is Empty.')
-        SerialDispatcher(LORA_PORT, handlers=[CMessageOkHandler()]).run()
+        # SerialDispatcher(LORA_PORT, handlers=[CMessageOkHandler()]).run()
         ### <--
 
         print('\n')
