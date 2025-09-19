@@ -186,8 +186,6 @@ def main():
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
         dsg_data, has_error_1 = get_dsg_data(now)
         drrg_data, has_error_2 = get_drrg_data(now)
-
-        # if drrg_data is not None and dsg_data is not None:
         write_to_csv(DATA_LOG_PATH, dsg_data.get_csv_format())
         write_to_csv(DATA_LOG_PATH, drrg_data.get_csv_format())
         payload = CompiledSensorData(data=[drrg_data, dsg_data]).get_full_payload(now)
@@ -196,6 +194,8 @@ def main():
         ### <--
 
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
+
+        ### <-- This block is responsible for handling LoRa response.
         sleep(0.5)
         if LORA_PORT.in_waiting:
             while LORA_PORT.in_waiting:
@@ -203,6 +203,7 @@ def main():
                 print('Device Reply: ', reply)
         else:
             print('Receive Buffer is Empty.')
+        ### <--
 
         print('\n')
 

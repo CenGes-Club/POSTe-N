@@ -1,6 +1,8 @@
 """
 Raise Exceptions will be Automatically Logged to .log file here.
 """
+from enum import Enum, auto
+
 from datetime import datetime, timedelta
 import os
 from configs import parse_string_config
@@ -15,3 +17,8 @@ def rename_log_file(now: datetime) -> None:
     # TODO: Try statement for the rename function so no comparison by > or <, but within < x < instead.
     os.rename(DATA_LOG_PATH, DATA_LOG_PATH[:-4] + '_' + previous_day + DATA_LOG_PATH[-4:])
     os.rename(EVENT_LOG_PATH, EVENT_LOG_PATH[:-4] + '_' + previous_day + EVENT_LOG_PATH[-4:])
+
+
+class EventType(Enum):  # TODO: This enum might be pointless
+    CMSG_OK = auto()
+    CMSG_NOK = auto()
