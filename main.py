@@ -135,7 +135,7 @@ def get_dsg_data(initial_time) -> tuple[SensorData, bool]:
         the second element is whether the DSG data was retrieved
     """
     data = SensorData(
-        source=DataSource.DIGITAL_RAIN_GAUGE,
+        source=DataSource.DIGITAL_STAFF_GAUGE,
         unit='cm',
         date=initial_time,
         data=[]
