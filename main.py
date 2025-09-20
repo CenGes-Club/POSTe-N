@@ -180,8 +180,10 @@ def main():
     next_midnight = get_next_midnight(now)
     while DSG_PORT.is_open and DRRG_PORT.is_open:
         if now > next_midnight:
+            write_to_serial(LORA_PORT, AT.JOIN)
             rename_log_file(now)
             next_midnight = get_next_midnight(now)
+
 
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
         dsg_data, has_error_1 = get_dsg_data(now)
@@ -189,7 +191,6 @@ def main():
         payload = CompiledSensorData(data=[dsg_data, drrg_data])
         write_to_csv(DATA_LOG_PATH, payload.get_csv_format(now))
         write_to_serial(LORA_PORT, AT.CMSG, payload.get_full_payload(now))
-        print('Payload: ', payload)
         ### <--
 
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs

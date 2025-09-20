@@ -6,6 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import NewType, Optional
 
+
 NULL_FORMAT = '#'
 
 
@@ -45,6 +46,9 @@ class SensorData:
             payload += fill_zeroes(element.datum, element.format)
         return payload
 
+    def get_datum(self) -> list[float]:
+        return [raw_data.datum for raw_data in self.data]
+
 
 @dataclass
 class CompiledSensorData:
@@ -62,7 +66,7 @@ class CompiledSensorData:
     def get_csv_format(self, now) -> list:
         data = [now]
         for sensor_data in self.data:
-            data += [sensor_data.get_payload_format()]
+            data += sensor_data.get_datum()
         return data
 
 

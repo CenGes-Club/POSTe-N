@@ -54,6 +54,7 @@ def write_to_serial(port, command, arg=None):
     cmd = get_command(command)
     if arg is not None:
         cmd += '="' + arg + '"'
+    print('Payload: ', cmd)
     cmd += '\n'
     port.write(cmd.encode('ascii'))
 
@@ -109,7 +110,7 @@ class SerialDispatcher:
         while True:  # this uses the `command` oop principle
             if self.port.in_waiting:
                 line = self.port.readline().decode().strip()  # decode and strip might be unnecessary
-                print(line)  # TODO: Remove later, This is just for testing.
+                print(line)  # TODO: Remove later, this is just for testing.
 
                 if self.active_handler is None:
                     # look for a handler that matches this line
