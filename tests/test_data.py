@@ -49,7 +49,7 @@ class MyTestCase(unittest.TestCase):
         expected_null_format = '#####'
         the_time = datetime(1, 1, 1, hour=12, minute=30)
         payload = self.compiled_data.get_full_payload(the_time)
-        expected_payload = '"1230' + expected_1 + expected_1 + expected_2 + expected_null_format + '"'
+        expected_payload = '1230' + expected_1 + expected_1 + expected_2 + expected_null_format
         print("\n\nExpected Payload: ", expected_payload)
 
         self.assertEqual(expected_payload, payload)

@@ -1,9 +1,9 @@
 import unittest
+from datetime import datetime
 from unittest.mock import MagicMock, patch
-from datetime import datetime, timedelta
 
 import main
-from data import SensorData, RawData, DataSource, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT
+from data import DataSource
 
 
 class TestMain(unittest.TestCase):

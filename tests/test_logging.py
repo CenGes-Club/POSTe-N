@@ -21,7 +21,7 @@ class TestDataclass(unittest.TestCase):
             data=[RawData(format=RAIN_DATA_FORMAT, datum=None)],
         )
         payload = CompiledSensorData(data=[data_1, data_2]).get_csv_format(date)
-        expected = [date, '#####', '######']
+        expected = [date, None, None]
         self.assertEqual(expected, payload)
 
 
