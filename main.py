@@ -1,4 +1,3 @@
-import RPi.GPIO as GPIO
 import serial
 import serial.rs485
 
@@ -12,33 +11,6 @@ from configs import parse_serial_config, DRRG_COMM_0, DSG_COMM_0
 from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT, CompiledSensorData
 from generics import write_to_csv
 from logs import rename_log_file, DATA_LOG_PATH
-
-
-# GPIO Variables\Methods
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
-
-
-# Initialize Variables
-DSG_PORT = serial.Serial(**parse_serial_config('config.xml', 'dsg'))
-DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'drrg'))
-LORA_PORT = serial.Serial(**parse_serial_config('config.xml', 'lora'))
-
-
-DSG_PORT.rs485_mode = serial.rs485.RS485Settings(
-    rts_level_for_tx = False,
-    rts_level_for_rx = False,
-    delay_before_tx = 0.0,
-    delay_before_rx = 0.0
-)
-
-
-DRRG_PORT.rs485_mode = serial.rs485.RS485Settings(
-    rts_level_for_tx = False,
-    rts_level_for_rx = False,
-    delay_before_tx = 0.0,
-    delay_before_rx = 0.0
-)
 
 
 def get_data_from_port(port, comm, line_mode) -> bytes:
@@ -55,28 +27,30 @@ def do_crc_check(data) -> int:
     return crc.final()
 
 
-def setup():
+def setup(port):
     """Lora Node Join Network"""
-    if not LORA_PORT.is_open:
+    if not port.is_open:
         raise Exception("Lora Node is not open")  # Logging
 
-    write_to_serial(LORA_PORT, AT.JOIN)
+    write_to_serial(port, AT.JOIN)
     sleep(5)  # 10 seconds to be safe
 
-    if LORA_PORT.in_waiting:
-        while LORA_PORT.in_waiting:
-            reply = LORA_PORT.readline()
+    if port.in_waiting:
+        while port.in_waiting:
+            reply = port.readline()
             print('LoRa Node:', reply)
     else:
         print('No Reply from LoRa Node')
 
 
 # TODO: Determine if nomadic error handling should be done
-def get_drrg_data(initial_time) -> tuple[SensorData, bool]:
+def get_drrg_data(initial_time, port) -> tuple[SensorData, bool]:
     """ Get DRRG Data
     Args:
         initial_time:
             time when the DRRG data was retrieved
+        port:
+            `serial.Serial` port where data will be retrieved
     Returns:
         `tuple` of len 2 where the first element is the sensor data and
         the second element is whether the DRRG data was retrieved
@@ -88,7 +62,7 @@ def get_drrg_data(initial_time) -> tuple[SensorData, bool]:
         data=[]
     )
 
-    raw_data = get_data_from_port(DRRG_PORT, DRRG_COMM_0, line_mode=True)
+    raw_data = get_data_from_port(port, DRRG_COMM_0, line_mode=True)
     error_msg = None
     if len(raw_data) != 37:  # TODO: Make this eLeGanT
         error_msg = "ERROR: No communication with DRRG!"
@@ -125,11 +99,13 @@ def get_drrg_data(initial_time) -> tuple[SensorData, bool]:
     return data, False
 
 
-def get_dsg_data(initial_time) -> tuple[SensorData, bool]:
+def get_dsg_data(initial_time, port) -> tuple[SensorData, bool]:
     """Gets DSG Data
     Args:
         initial_time:
             time when the DSG data was retrieved
+        port:
+            `serial.Serial` port where data will be retrieved
     Returns:
         `tuple` of len 2 where the first element is the sensor data and
         the second element is whether the DSG data was retrieved
@@ -141,7 +117,7 @@ def get_dsg_data(initial_time) -> tuple[SensorData, bool]:
         data=[]
     )
 
-    raw_data = get_data_from_port(DSG_PORT, DSG_COMM_0, line_mode=False)
+    raw_data = get_data_from_port(port, DSG_COMM_0, line_mode=False)
 
     error_msg = None
     if len(raw_data) == 0:  # TODO: Make this eLeGanT
@@ -172,7 +148,30 @@ def get_next_midnight(now: datetime) -> datetime:
 
 
 def main():
-    setup()
+    import RPi.GPIO as GPIO
+    # GPIO Variables\Methods
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BOARD)
+
+    # Initialize Variables
+    DSG_PORT = serial.Serial(**parse_serial_config('config.xml', 'dsg'))
+    DRRG_PORT = serial.Serial(**parse_serial_config('config.xml', 'drrg'))
+    LORA_PORT = serial.Serial(**parse_serial_config('config.xml', 'lora'))
+
+    DSG_PORT.rs485_mode = serial.rs485.RS485Settings(
+        rts_level_for_tx=False,
+        rts_level_for_rx=False,
+        delay_before_tx=0.0,
+        delay_before_rx=0.0
+    )
+
+    DRRG_PORT.rs485_mode = serial.rs485.RS485Settings(
+        rts_level_for_tx=False,
+        rts_level_for_rx=False,
+        delay_before_tx=0.0,
+        delay_before_rx=0.0
+    )
+    setup(LORA_PORT)
     print('Setup Finished')
     now = datetime.now()  # this should fix race condition
 
@@ -186,8 +185,8 @@ def main():
 
 
         ### <-- This block is responsible for retrieving, logging, and transmitting data.
-        dsg_data, has_error_1 = get_dsg_data(now)
-        drrg_data, has_error_2 = get_drrg_data(now)
+        dsg_data, has_error_1 = get_dsg_data(now, DSG_PORT)
+        drrg_data, has_error_2 = get_drrg_data(now, DRRG_PORT)
         payload = CompiledSensorData(data=[dsg_data, drrg_data])
         write_to_csv(DATA_LOG_PATH, payload.get_csv_format(now))
         write_to_serial(LORA_PORT, AT.CMSG, payload.get_full_payload(now))
@@ -208,7 +207,7 @@ def main():
 
         print('\n')
 
-        sleep(60)
+        sleep(120)
         now = datetime.now()
 
     DSG_PORT.close()
