@@ -173,7 +173,9 @@ def main():
     )
     setup(LORA_PORT)
     print('Setup Finished')
+
     now = datetime.now()  # this should fix race condition
+    loops_since_cmsg = 0
 
     # TODO: Fix condition where power out occurs before next midnight is checked.
     next_midnight = get_next_midnight(now)
@@ -189,7 +191,9 @@ def main():
         drrg_data, has_error_2 = get_drrg_data(now, DRRG_PORT)
         payload = CompiledSensorData(data=[dsg_data, drrg_data])
         write_to_csv(DATA_LOG_PATH, payload.get_csv_format(now))
-        write_to_serial(LORA_PORT, AT.CMSG, payload.get_full_payload(now))
+        if loops_since_cmsg >= 2:
+            write_to_serial(LORA_PORT, AT.CMSG, payload.get_full_payload(now))
+            loops_since_cmsg = 0
         ### <--
 
         # TODO: Next Block Should be Responsible for Reading the Buffer for any CMSG ACK or ERRORs
@@ -207,7 +211,8 @@ def main():
 
         print('\n')
 
-        sleep(120)
+        loops_since_cmsg += 1
+        sleep(60)
         now = datetime.now()
 
     DSG_PORT.close()
