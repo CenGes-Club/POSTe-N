@@ -1,0 +1,14 @@
+[Unit]
+Description=Cenges-N Main Script
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python /home/postekit/Desktop/CENGES-POSTe-N/main.py > /home/postekit/POSTe/logs.log
+WorkingDirectory=/home/postekit/Desktop/CENGES-POSTe-N
+StandardOutput=journal
+StandardError=journal
+Restart=always
+User=postekit
+
+[Install]
+WantedBy=multi-user.target
