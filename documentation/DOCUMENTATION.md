@@ -4,55 +4,6 @@ This document provides comprehensive documentation for all Python modules in the
 
 ---
 
-## Module: `buzzer.py`
-
-### Overview
-A hardware control module that manages GPIO-based buzzer and LED warning systems for flood notifications on Raspberry Pi.
-
-### Purpose
-Handles all buzzer and LED indicator functionality for alerting users about different flood levels through visual and auditory warnings.
-
-### Dependencies
-- `RPi.GPIO`: Raspberry Pi GPIO control library
-
-### Constants
-- **GPIO Pin Assignments:**
-  - `pin_Ora = 36`: Orange LED warning pin
-  - `pin_Red = 38`: Red LED warning pin  
-  - `pin_Buz = 40`: Buzzer control pin
-
-- **Flood Level Thresholds:**
-  - `FLOOD_NO = 5`: No flood level threshold
-  - `FLOOD_LOW = 10`: Low flood level threshold
-  - `FLOOD_HIGH = 20`: High flood level threshold
-  - `FLOOD_TRIGGER = 0`: Flood trigger threshold
-
-### GPIO Configuration
-- **Mode**: `GPIO.BOARD` (Physical pin numbering)
-- **Setup**: All pins configured as OUTPUT with initial HIGH state
-- **Warnings**: Disabled to prevent GPIO cleanup warnings
-
-### Functions
-
-#### `notify_buzzer(flood_height)`
-**Status**: Not implemented (placeholder)
-
-**Purpose**: Intended to activate appropriate warning indicators based on flood height levels.
-
-**Parameters**:
-- `flood_height`: Numeric value representing current flood height
-
-**Returns**: None
-
-**Current State**: Function body contains only `pass` - requires implementation
-
-### Usage Notes
-- Designed for Raspberry Pi hardware integration
-- Requires proper GPIO permissions to function
-- LED and buzzer activation logic needs to be implemented based on flood thresholds
-
----
-
 ## Module: `commands.py`
 
 ### Overview
@@ -68,6 +19,9 @@ Manages LoRa node communication, AT command transmission, serial message parsing
 - `dataclasses`: For structured data classes
 - `abc`: For abstract base classes
 - `logs.EventType`: Custom event type enumeration
+
+### Constants
+- `CMSG_AWK_REPLY_OK`: Predefined reply format for successful CMSG acknowledgments
 
 ### Enums
 
@@ -91,9 +45,6 @@ Defines the structure for expected reply patterns:
 Represents a complete serial message:
 - `lines: list[str]`: List of message lines received
 - `timestamp: datetime`: Auto-generated timestamp (defaults to current time)
-
-### Constants
-- `CMSG_AWK_REPLY_OK`: Predefined reply format for successful CMSG acknowledgments
 
 ### Functions
 
@@ -825,11 +776,10 @@ Based on TODO comments:
 
 The POSTe-N system consists of six main Python modules that work together to provide environmental monitoring and data transmission capabilities:
 
-1. **buzzer.py** - Hardware control for visual/audio warnings
-2. **commands.py** - LoRa communication and AT command handling  
-3. **configs.py** - XML configuration parsing and serial parameter management
-4. **data.py** - Sensor data structures and payload formatting
-5. **generics.py** - CSV utility functions for data persistence
-6. **logs.py** - Logging system and file rotation management
+1. **commands.py** - LoRa communication and AT command handling  
+2. **configs.py** - XML configuration parsing and serial parameter management
+3. **data.py** - Sensor data structures and payload formatting
+4. **generics.py** - CSV utility functions for data persistence
+5. **logs.py** - Logging system and file rotation management
 
 Each module is designed with specific responsibilities and clean interfaces, following object-oriented and functional programming principles where appropriate. The system supports digital rain gauges (DRRG) and digital staff gauges (DSG) for environmental monitoring with LoRa wireless transmission capabilities.
