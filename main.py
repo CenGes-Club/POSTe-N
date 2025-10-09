@@ -191,6 +191,7 @@ def main():
         drrg_data, has_error_2 = get_drrg_data(now, DRRG_PORT)
         payload = CompiledSensorData(data=[dsg_data, drrg_data])
         write_to_csv(DATA_LOG_PATH, payload.get_csv_format(now))
+        loops_since_cmsg += 1
         if loops_since_cmsg >= 2:
             write_to_serial(LORA_PORT, AT.CMSG, payload.get_full_payload(now))
             loops_since_cmsg = 0
@@ -211,7 +212,6 @@ def main():
 
         print('\n')
 
-        loops_since_cmsg += 1
         sleep(60)
         now = datetime.now()
 
