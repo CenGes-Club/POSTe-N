@@ -54,6 +54,30 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(expected_payload, payload)
 
+    def test_scientific_notation_small_numbers(self):
+        """Test that very small numbers (that would produce scientific notation) are handled correctly."""
+        # Test case from the issue: 68739512313e-06
+        n = 0.000068739512313
+        expected = '000000'  # Rounds to 0.00 with 2 decimal places
+        self.data1.append_data(RawData(RAIN_DATA_FORMAT, n))
+        self.assertEqual(expected, self.data1.get_payload_format())
+
+    def test_scientific_notation_edge_cases(self):
+        """Test various scientific notation edge cases."""
+        from data import fill_zeroes, _DataFormat
+        
+        # Very small number
+        result = fill_zeroes(1e-6, _DataFormat("4.2"))
+        self.assertEqual(result, "000000")
+        
+        # Small number with scientific notation
+        result = fill_zeroes(1.234e-5, _DataFormat("4.2"))
+        self.assertEqual(result, "000000")
+        
+        # Normal numbers should still work
+        result = fill_zeroes(1.3, _DataFormat("3.2"))
+        self.assertEqual(result, "00130")
+
 
 if __name__ == '__main__':
     unittest.main()

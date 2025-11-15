@@ -91,7 +91,13 @@ def fill_zeroes(number: float, data_format: _DataFormat) -> str:
         '001.30'
     """
     n_leading, n_trailing = map(int, data_format.split("."))
-    whole_numbers, decimals = str(round(number, n_trailing)).split(".")
+    rounded = round(number, n_trailing)
+    # Use format string to prevent scientific notation
+    # Format with max(1, n_trailing) to ensure we always have a decimal point for splitting
+    formatted = format(rounded, f'.{max(1, n_trailing)}f')
+    parts = formatted.split(".")
+    whole_numbers = parts[0]
+    decimals = parts[1][:n_trailing] if n_trailing > 0 else '0'
     if int(decimals) == 0:
         decimals = ''
 
