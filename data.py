@@ -4,16 +4,22 @@ Dataclass for DSG and DRRG and the Payload Functions
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import NewType, Optional
-
+from typing import NewType, Optional, NamedTuple
 
 NULL_FORMAT = '#'
 
 
 _DataFormat = NewType('_DataFormat', str)
-FLOOD_FORMAT = _DataFormat("5.0")
-RAIN_DATA_FORMAT = _DataFormat("4.2")
-RAIN_ACCU_FORMAT = _DataFormat("4.17")
+
+
+class DataFormat(NamedTuple):
+    whole: int
+    decimals: int
+
+
+FLOOD_FMT = DataFormat(5, 0)
+RAIN_FMT = DataFormat(4, 2)
+RAIN_ACCU_FMT = DataFormat(4, 17)
 
 
 class DataSource(Enum):
@@ -23,7 +29,7 @@ class DataSource(Enum):
 
 @dataclass
 class RawData:
-    format: _DataFormat
+    format: DataFormat
     datum: Optional[float]
 
 
@@ -75,7 +81,7 @@ def zeroth_function(zeroes: int, number: str, prefix: bool) -> str:
     return '0' * missing_zeroes + number if prefix is True else number + '0' * missing_zeroes
 
 
-def fill_zeroes(number: float, data_format: _DataFormat) -> str:
+def fill_zeroes(number: float, data_format: DataFormat) -> str:
     """Generates a string where missing leading and trailing numbers are filled with zeroes.
 
     Args:
@@ -83,31 +89,18 @@ def fill_zeroes(number: float, data_format: _DataFormat) -> str:
             The floating point number where the whole and decimal parts will be filled.
         data_format:
             data_format:
-                `DataFormat`: The data format in the form "x.y" where:
+                `DataFormat`: The data format in the form `(x, y)` where:
                     - x is the number of whole number digits
                     - y is the number of decimal digits
     Returns:
-        >>> fill_zeroes(1.3, _DataFormat("3.2"))
+        >>> fill_zeroes(1.3, DataFormat(3, 2))
         '001.30'
     """
-    n_leading, n_trailing = map(int, data_format.split("."))
-    rounded = round(number, n_trailing)
-    # Use format string to prevent scientific notation
-    # Format with max(1, n_trailing) to ensure we always have a decimal point for splitting
-    formatted = format(rounded, f'.{max(1, n_trailing)}f')
-    parts = formatted.split(".")
-    whole_numbers = parts[0]
-    decimals = parts[1][:n_trailing] if n_trailing > 0 else '0'
-    if int(decimals) == 0:
-        decimals = ''
+    # Calculate total width: whole + decimal + 1 (for the dot)
+    width = data_format.whole + data_format.decimals + (1 if data_format.decimals > 0 else 0)
+    return f"{number:0{width}.{data_format.decimals}f}".replace('.', '')
 
-    # Adds the Leading Zeroes to the Whole Number
-    whole_number = zeroth_function(n_leading, whole_numbers, True)
-    decimal = zeroth_function(n_trailing, decimals, False)
-
-    return whole_number + decimal
-
-def get_null_format(null_format: str, data_format: _DataFormat) -> str:
+def get_null_format(null_format: str, data_format: DataFormat) -> str:
     """
     Generate the payload's null format string in the case where data is absent.
 
@@ -116,7 +109,7 @@ def get_null_format(null_format: str, data_format: _DataFormat) -> str:
             The character string to used as the placeholder for null data.
 
         data_format:
-            The data format in the form "x.y" where:
+            The data format in the form `(x, y)` where:
                 - x is the number of whole number digits
                 - y is the number of decimal digits
 
@@ -124,8 +117,7 @@ def get_null_format(null_format: str, data_format: _DataFormat) -> str:
         str:
             A str representing the null formatted payload.
     Example:
-        >>> get_null_format('#', _DataFormat("3.2"))
+        >>> get_null_format('#', DataFormat(3, 2))
         '#####'
     """
-    n_leading, n_trailing = map(int, data_format.split("."))
-    return null_format * n_leading + null_format * n_trailing
+    return null_format * data_format.whole + null_format * data_format.decimals

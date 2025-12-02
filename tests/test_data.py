@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from data import SensorData, DataSource, FLOOD_FORMAT, RawData, CompiledSensorData, RAIN_DATA_FORMAT
+from data import SensorData, DataSource, FLOOD_FMT, RawData, CompiledSensorData, RAIN_FMT
 
 
 class MyTestCase(unittest.TestCase):
@@ -23,13 +23,13 @@ class MyTestCase(unittest.TestCase):
     def test_flood_data(self):
         n = float(1200)
         expected = '01200'
-        self.data1.append_data(RawData(FLOOD_FORMAT, n))
+        self.data1.append_data(RawData(FLOOD_FMT, n))
         self.assertEqual(expected, self.data1.get_payload_format())
 
     def test_rain_data(self):
         n = 1234.2
         expected = "123420"
-        self.data2.append_data(RawData(RAIN_DATA_FORMAT, n))
+        self.data2.append_data(RawData(RAIN_FMT, n))
         self.assertEqual(expected, self.data2.get_payload_format())
 
     def test_time_data(self):
@@ -39,12 +39,12 @@ class MyTestCase(unittest.TestCase):
     def test_full_payload(self):
         n = float(1200)
         expected_1 = '01200'
-        self.data1.append_data(RawData(FLOOD_FORMAT, n))
-        self.data1.append_data(RawData(FLOOD_FORMAT, n))
+        self.data1.append_data(RawData(FLOOD_FMT, n))
+        self.data1.append_data(RawData(FLOOD_FMT, n))
         n = 1234.2
         expected_2 = "123420"
-        self.data2.append_data(RawData(RAIN_DATA_FORMAT, n))
-        self.data2.append_data(RawData(FLOOD_FORMAT, None))
+        self.data2.append_data(RawData(RAIN_FMT, n))
+        self.data2.append_data(RawData(FLOOD_FMT, None))
 
         expected_null_format = '#####'
         the_time = datetime(1, 1, 1, hour=12, minute=30)
@@ -58,24 +58,24 @@ class MyTestCase(unittest.TestCase):
         """Test that very small numbers (that would produce scientific notation) are handled correctly."""
         # Test case from the issue: 68739512313e-06
         n = 0.000068739512313
-        expected = '000000'  # Rounds to 0.00 with 2 decimal places
-        self.data1.append_data(RawData(RAIN_DATA_FORMAT, n))
+        expected = '000000'
+        self.data1.append_data(RawData(RAIN_FMT, n))
         self.assertEqual(expected, self.data1.get_payload_format())
 
     def test_scientific_notation_edge_cases(self):
         """Test various scientific notation edge cases."""
-        from data import fill_zeroes, _DataFormat
+        from data import fill_zeroes, DataFormat
         
         # Very small number
-        result = fill_zeroes(1e-6, _DataFormat("4.2"))
+        result = fill_zeroes(1e-6, DataFormat(4, 2))
         self.assertEqual(result, "000000")
         
         # Small number with scientific notation
-        result = fill_zeroes(1.234e-5, _DataFormat("4.2"))
+        result = fill_zeroes(1.234e-5, DataFormat(4, 2))
         self.assertEqual(result, "000000")
         
         # Normal numbers should still work
-        result = fill_zeroes(1.3, _DataFormat("3.2"))
+        result = fill_zeroes(1.3, DataFormat(3, 2))
         self.assertEqual(result, "00130")
 
 

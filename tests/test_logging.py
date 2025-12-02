@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import unittest
-from data import SensorData, CompiledSensorData, FLOOD_FORMAT, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, DataSource, RawData
+from data import SensorData, CompiledSensorData, FLOOD_FMT, RAIN_FMT, RAIN_ACCU_FMT, DataSource, RawData
 
 
 class TestDataclass(unittest.TestCase):
@@ -12,13 +12,13 @@ class TestDataclass(unittest.TestCase):
             source=DataSource.DIGITAL_RAIN_GAUGE,
             unit='cm',
             date=date,
-            data=[RawData(format=FLOOD_FORMAT, datum=None)],
+            data=[RawData(format=FLOOD_FMT, datum=None)],
         )
         data_2 = SensorData(
             source=DataSource.DIGITAL_RAIN_GAUGE,
             unit='mm',
             date=date,
-            data=[RawData(format=RAIN_DATA_FORMAT, datum=None)],
+            data=[RawData(format=RAIN_FMT, datum=None)],
         )
         payload = CompiledSensorData(data=[data_1, data_2]).get_csv_format(date)
         expected = [date, None, None]

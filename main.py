@@ -8,7 +8,7 @@ from time import sleep
 
 from commands import write_to_serial, AT, SerialDispatcher, CMessageOkHandler
 from configs import parse_serial_config, DRRG_COMM_0, DSG_COMM_0
-from data import SensorData, DataSource, RawData, RAIN_DATA_FORMAT, RAIN_ACCU_FORMAT, FLOOD_FORMAT, CompiledSensorData
+from data import SensorData, DataSource, RawData, RAIN_FMT, RAIN_ACCU_FMT, FLOOD_FMT, CompiledSensorData
 from generics import write_to_csv
 from logs import rename_log_file, DATA_LOG_PATH
 
@@ -70,8 +70,8 @@ def get_drrg_data(initial_time, port) -> tuple[SensorData, bool]:
         error_msg = "CRC Check Failed! DRRG"
     if error_msg:
         print(error_msg)
-        data.append_data(RawData(format=RAIN_DATA_FORMAT, datum=None))
-        data.append_data(RawData(format=RAIN_ACCU_FORMAT, datum=None))
+        data.append_data(RawData(format=RAIN_FMT, datum=None))
+        data.append_data(RawData(format=RAIN_ACCU_FMT, datum=None))
         return data, True
 
     rain_data, accu_data = bytearray(0), bytearray(0)
@@ -94,8 +94,8 @@ def get_drrg_data(initial_time, port) -> tuple[SensorData, bool]:
     print("Rain Data:" + str(rain_data_f))
     print("Rain Accu:" + str(accu_data_f))
 
-    data.append_data(RawData(format=RAIN_DATA_FORMAT, datum=rain_data_f))
-    data.append_data(RawData(format=RAIN_ACCU_FORMAT, datum=accu_data_f))
+    data.append_data(RawData(format=RAIN_FMT, datum=rain_data_f))
+    data.append_data(RawData(format=RAIN_ACCU_FMT, datum=accu_data_f))
     return data, False
 
 
@@ -126,13 +126,13 @@ def get_dsg_data(initial_time, port) -> tuple[SensorData, bool]:
         error_msg = "CRC Check Failed! DSG"
     if error_msg:
         print(error_msg)
-        data.data = [RawData(format=FLOOD_FORMAT, datum=None)]
+        data.data = [RawData(format=FLOOD_FMT, datum=None)]
         return data, True
 
     water_level = float(int.from_bytes(raw_data[4:5], "big"))
     print("Water level: %s cm" % water_level)
 
-    data.append_data(RawData(format=FLOOD_FORMAT, datum=water_level))
+    data.append_data(RawData(format=FLOOD_FMT, datum=water_level))
     return data, False
 
 
