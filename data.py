@@ -4,12 +4,9 @@ Dataclass for DSG and DRRG and the Payload Functions
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import NewType, Optional, NamedTuple
+from typing import Optional, NamedTuple
 
 NULL_FORMAT = '#'
-
-
-_DataFormat = NewType('_DataFormat', str)
 
 
 class DataFormat(NamedTuple):

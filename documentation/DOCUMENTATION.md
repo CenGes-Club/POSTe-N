@@ -337,10 +337,10 @@ Defines standardized data formats, handles sensor data collection and storage, f
 - `NULL_FORMAT = '#'`: Character used as placeholder for missing data
 
 #### Data Format Types
-- `_DataFormat = NewType('_DataFormat', str)`: Type alias for data format strings
-- `FLOOD_FORMAT = _DataFormat("5.0")`: Format for flood/water level data (5 digits, 0 decimals)
-- `RAIN_DATA_FORMAT = _DataFormat("4.2")`: Format for rainfall rate data (4 whole digits, 2 decimal places)
-- `RAIN_ACCU_FORMAT = _DataFormat("4.17")`: Format for accumulated rainfall (4 whole digits, 17 decimal places)
+- `DataFormat = NewType('DataFormat', str)`: Type alias for data format strings
+- `FLOOD_FMT = DataFormat("5.0")`: Format for flood/water level data (5 digits, 0 decimals)
+- `RAIN_FMT = DataFormat("4.2")`: Format for rainfall rate data (4 whole digits, 2 decimal places)
+- `RAIN_ACCU_FMT = DataFormat("4.17")`: Format for accumulated rainfall (4 whole digits, 17 decimal places)
 
 ### Enums
 
@@ -355,7 +355,7 @@ Defines sensor types:
 **Purpose**: Represents a single sensor measurement with its formatting requirements.
 
 **Attributes**:
-- `format: _DataFormat`: Specifies how the data should be formatted for transmission
+- `format: DataFormat`: Specifies how the data should be formatted for transmission
 - `datum: Optional[float]`: The actual measurement value (None for missing data)
 
 #### `SensorData`
@@ -429,12 +429,12 @@ Defines sensor types:
 
 **Returns**: Zero-padded string
 
-#### `fill_zeroes(number: float, data_format: _DataFormat) -> str`
+#### `fill_zeroes(number: float, data_format: DataFormat) -> str`
 **Purpose**: Formats floating-point numbers according to specified data format with zero padding.
 
 **Parameters**:
 - `number: float`: The number to format
-- `data_format: _DataFormat`: Format specification (e.g., "3.2")
+- `data_format: DataFormat`: Format specification (e.g., "3.2")
 
 **Logic**:
 1. Parses format to get whole and decimal digit requirements
@@ -448,16 +448,16 @@ Defines sensor types:
 
 **Example**:
 ```python
-result = fill_zeroes(1.3, _DataFormat("3.2"))
+result = fill_zeroes(1.3, DataFormat("3.2"))
 # Returns: "00130" (note: no decimal point in output)
 ```
 
-#### `get_null_format(null_format: str, data_format: _DataFormat) -> str`
+#### `get_null_format(null_format: str, data_format: DataFormat) -> str`
 **Purpose**: Generates null value representation matching the specified data format.
 
 **Parameters**:
 - `null_format: str`: Character to use for null representation (typically '#')
-- `data_format: _DataFormat`: Format specification (e.g., "3.2")
+- `data_format: DataFormat`: Format specification (e.g., "3.2")
 
 **Logic**:
 1. Parses format to get total digit requirements
@@ -467,7 +467,7 @@ result = fill_zeroes(1.3, _DataFormat("3.2"))
 
 **Example**:
 ```python
-result = get_null_format('#', _DataFormat("3.2"))
+result = get_null_format('#', DataFormat("3.2"))
 # Returns: "#####" (5 characters total)
 ```
 
@@ -484,8 +484,8 @@ rain_data = SensorData(
 )
 
 # Add measurements
-rain_data.append_data(RawData(RAIN_DATA_FORMAT, 12.34))
-rain_data.append_data(RawData(RAIN_ACCU_FORMAT, None))  # Missing data
+rain_data.append_data(RawData(RAIN_FMT, 12.34))
+rain_data.append_data(RawData(RAIN_ACCU_FMT, None))  # Missing data
 
 # Get formatted payload
 payload = rain_data.get_payload_format()
